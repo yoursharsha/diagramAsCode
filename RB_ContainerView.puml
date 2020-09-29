@@ -1,0 +1,104 @@
+@startuml Container_RB
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/master/dist
+!includeurl AWSPuml/AWSCommon.puml
+!includeurl AWSPuml/EndUserComputing/all.puml
+!includeurl AWSPuml/Storage/SimpleStorageServiceS3.puml
+!includeurl AWSPuml/ApplicationIntegration/SQS.puml
+!includeurl AWSPuml/ApplicationIntegration/SNS.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!includeurl https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v7.0/dist/AWSCommon.puml
+!includeurl https://raw.githubusercontent.com/milo-minderbinder/AWS-PlantUML/release/18-2-22/dist/common.puml
+!include <awslib/Compute/Lambda>
+!include <aws/Storage/AmazonS3/AmazonS3>
+!includeurl AWSPuml/Analytics/KinesisDataStreams.puml
+
+
+
+title Container Diagram for SSC Relationship Building
+
+
+/'LAYOUT_LEFT_RIGHT'/
+
+/' Define External Systems '/
+Person(rep, "Rep", "Fidelity Sales Associate")
+System_Ext(payroll,"Fidelity Payroll System")
+System_Ext(crm, "CRM System", "Stores interactions b/w Reps and Customers")
+System_Ext(pas,"PAS", "System of Records for PAS assignments")
+System_Ext(cp,"CP", "System of Reference for DFRs, Cust Tier, P2C")
+System_Ext(ics,"ICS", "System of Reference for DFRs")
+System_Ext(transactionsources,"FBSI, FILI and CGF", "Retail Customer FInancial Transactions")
+System_Ext(ihub,"IHub", "Customer Interactions")
+
+System(callidus,"SSC Callidus", "Implements Variable Compensation plans for Reps")
+System(ssconline,"SSC Online", "Adjustments")
+System(transactions,"SSC Transaction Matching System","Match Transactions with relationship")
+System(crediting, "SSC Crediting","Credits Associates for Sales being generated for Compensation")
+System(hms, "SSC Hierarchy Management System","Identifies Asscoiates in Compensable role")
+
+
+
+/' Define RB Containers '/
+System_Boundary(rb,"SSC Relationship Building"){
+
+/' FMN Containers '/
+System_Boundary(fmnrb,"FMN"){
+    Container(rc,"Relationship Creation", "LWC")
+    Container(adjustment,"Relationship Adjustment", "LWC")
+    Container(aarb,"Associate Account Relationship Building", "LWC")
+    Container(associateEvent,"Associate Event", "LWC")
+    Container(repinfo,"Rep Info", "LWC")
+    ContainerDb(rbdb,"RB Database", "Oracle")
+    ContainerDb(ngdb,"NG Database", "Oracle")
+    ContainerDb(hmsdb,"HMS Database", "SQL Server")
+  }
+
+/' AWS Containers '/
+System_Boundary(awsrb,"AWS CLoud"){
+    KinesisDataStreams(rr, "Rapids and Rivers", "DEP")
+    SimpleStorageServiceS3(s3, "S3 Bucket", "Receives Inbound Feeds")
+    Lambda(lambda, "File Processor", "Converts File to Events")
+    Container(p2c,"P2C", "ACID")
+}
+
+}
+
+Rel(rc,rbdb,"Insert/Update/Delete", "Data")
+Rel(adjustment,rbdb,"Insert/Update/Delete", "Data")
+Rel(aarb,ngdb,"Insert/Update", "Data")
+Rel(rc,aarb,"Rep-Account Relationship", "Uses")
+
+Rel(repinfo,hmsdb,"Gets Rep Info", "Uses")
+Rel(repinfo,rc,"Rep Information", "Uses")
+Rel(repinfo,associateEvent,"Rep Informationp", "Uses")
+
+
+Rel(cp,s3,"Sends", "Data")
+Rel(s3,lambda,"Notify", "Event")
+Rel(lambda,rr,"Publish", "Event")
+Rel(p2c,ihub,"Uses", "data")
+Rel(p2c,rr,"Publish RC Request", "Event")
+Rel(rr,p2c,"Subscribes", "Event")
+
+
+Rel(ics,rc,"Sends", "Data")
+Rel(pas,s3,"Sends", "Data")
+Rel(rr,rc,"Subscribes", "Event")
+Rel(rr,adjustment,"Subscribes", "Event")
+Rel(rr,aarb,"Subscribes", "Event")
+Rel(aarb,rr,"Publishes Rep-Acct", "Event")
+
+
+Rel(hms,associateEvent,"Sends Rep Changes", "Data")
+
+Rel(ssconline,adjustment,"Adjustments Requests", "Data")
+Rel(aarb,transactions,"Uses Relationships", "Data")
+
+Rel(transactions,crediting,"Uses transactions", "Data")
+Rel(crediting,callidus,"Sends Compensable Credits", "Data")
+Rel(transactionsources,transactions,"Sends Transactions", "Data")
+Rel(rep,crm,"Uses", "Technolgy")
+Rel(rep,callidus,"View Sales and Comp Reports", "Technolgy")
+Rel(callidus,payroll,"Sends Comp info", "Data")
+
+@enduml

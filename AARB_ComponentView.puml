@@ -1,0 +1,62 @@
+@startuml ComponentAARB
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/master/dist
+!includeurl AWSPuml/AWSCommon.puml
+!includeurl AWSPuml/EndUserComputing/all.puml
+!includeurl AWSPuml/Storage/SimpleStorageServiceS3.puml
+!includeurl AWSPuml/ApplicationIntegration/SQS.puml
+!includeurl AWSPuml/ApplicationIntegration/SNS.puml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+!includeurl https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v7.0/dist/AWSCommon.puml
+!includeurl https://raw.githubusercontent.com/milo-minderbinder/AWS-PlantUML/release/18-2-22/dist/common.puml
+!include <awslib/Compute/Lambda>
+!include <aws/Storage/AmazonS3/AmazonS3>
+!includeurl AWSPuml/Analytics/KinesisDataStreams.puml
+
+
+
+title Component Diagram for Associate Account Relationship Building
+
+Container(rc,"Relationship Creation Service","LWC")
+Container(adjustment,"Adjustment Service","LWC")
+ContainerDb(ngdb,"NG DB","OracleDB")
+Container(odm,"ODM","IBM Product")
+Container_Boundary(rr,"Rapids and Rivers"){
+KinesisDataStreams(kinesis, "Event Streaming", "AWS Service")
+SNS(sns, "SNS","AWS Service")
+SQS(sqs, "SQS","AWS Service")
+}
+
+Container_Boundary(aarb, "Associate Account Relationship Service") {
+    Component(rcevent,"RC Completion Event River Subscriber","Java SDK")
+    Component(adjustmentevent,"Adjustment Completion Event River Subscriber","Java SDK")
+    Component(ngdao, "NG DAO", "jdbi")  
+    Component(repacctsyncdao, "RepAcct Sync DAO", "jdbi")
+    Component(rcclient, "RC Data Client", "java")
+    Component(odmclient, "ODM Data Client", "java")
+    Component(aarbpublisher, "Event Publisher", "java")
+    Component(odmrequest, "Create ODM Request", "java")
+}
+
+Rel(rc,kinesis,"RC Completion Event")
+Rel(adjustment,kinesis,"Adjustment Completion Event")
+
+Rel(sqs,rcevent,"RC Completion Event","Subscription")
+Rel(sqs,adjustmentevent,"RC Completion Event","Subscription")
+Rel(rcevent,odmrequest,"Consume")
+Rel(adjustmentevent,odmrequest,"Consume")
+Rel(ngdb,odmrequest,"Get Cust,Acct,Cust-Acct Info")
+Rel(rcclient,odmrequest,"Rep-Acct Info","HTTP")
+Rel(odmrequest,odmclient,"Evaluate Rep-Acct Rules")
+Rel(odmclient,odm, "HTTP")
+
+Rel(odmrequest,repacctsyncdao,"Rep-Acct Relationship")
+Rel(repacctsyncdao,ngdb,"Insert/Update")
+Rel(repacctsyncdao,aarbpublisher,"Sync Complete")
+Rel(aarbpublisher,kinesis,"AARB Completion Event")
+
+
+@enduml
+

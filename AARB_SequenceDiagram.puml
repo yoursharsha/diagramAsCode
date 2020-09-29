@@ -1,0 +1,10 @@
+@startuml "AARBSeq"
+RR -> RiverSubscriber: RC/Adjustment Completion Event
+box "Associate Account Relationship Service" 
+participant RiverSubscriber
+
+
+
+RR <-- RapidPublisher: Publish AARB Completion Event
+end box
+@enduml

@@ -1,0 +1,64 @@
+@startuml C4_Elements
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+
+title Context Diagram for SSC
+
+/' Define External Systems '/
+Person(rep, "Rep", "Fidelity Sales Associate")
+System_Ext(crm, "CRM System", "Stores interactions b/w Reps and Customers")
+System_Ext(payroll,"Fidelity Payroll System")
+System_Ext(piril,"PIRIL System", "Source System for License")
+System_Ext(workday,"HR System", "Stores information about Fidelity Associates")
+System_Ext(pas,"PAS", "System of Records for PAS assignments")
+System_Ext(cp,"CP", "System of Reference for DFRs, Cust Tier, P2C")
+System_Ext(ics,"ICS", "System of Reference for DFRs")
+System_Ext(aua,"AUA System", "Aggregates Retail Customer Assets and Positions")
+System_Ext(transactionsources,"FBSI, FILI and CGF", "Retail Customer FInancial Transactions")
+System_Ext(ihub,"IHub", "Customer Interactions")
+
+
+/' Define SSC Systems '/
+System_Boundary(c1,"SS&C"){
+System(callidus,"SSC Callidus", "Implements Variable Compensation plans for Reps")
+System(ssconline,"SSC Online", "Adjustments")
+System(rb,"SSC RelationShip Building Syste","Create Relationships - Reps,Customer,Accounts")
+System(transactions,"SSC Transaction Matching System","Match Transactions with relationship")
+System(crediting, "SSC Crediting","Credits Associates for Sales being generated for Compensation")
+System(hms, "SSC Hierarchy Management System","Identifies Asscoiates in Compensable role")
+}
+
+/' Rep Connections '/
+Rel(rep,crm,"Uses", "Technolgy")
+Rel(rep,callidus,"View Sales and Comp Reports", "Technolgy")
+Rel(callidus,payroll,"Sends Comp info", "Data")
+
+/' RB Feeds '/
+Rel(cp,rb,"Sends", "Data")
+Rel(ics,rb,"Sends", "Data")
+Rel(pas,rb,"Sends", "Data")
+Rel(ihub,rb,"Uses", "Data")
+
+/' Transaction Feeds '/
+Rel(ics,transactions,"Sends", "Data")
+Rel(aua,transactions,"Uses", "Data")
+Rel(transactionsources,transactions,"Sends Transactions", "Data")
+
+
+/' HMS Feeds '/
+Rel(hms,callidus,"Sends Asscociates Org info", "Data")
+Rel(hms,rb,"Sends Asscociate info", "Data")
+Rel(hms,crediting,"Sends Alignment and Licensing info", "Data")
+Rel(piril,hms,"Sends Licensing info", "Data")
+Rel(workday,hms,"Sends Asscoiate info", "Data")
+
+
+Rel(ssconline,rb,"Sends Referrels, Adjustments", "Data")
+Rel(rb,transactions,"Uses Relationships", "Data")
+Rel(transactions,crediting,"Uses transactions", "Data")
+Rel(crediting,callidus,"Sends Compensable Credits", "Data")
+
+
+
+@enduml
