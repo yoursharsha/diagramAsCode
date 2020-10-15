@@ -1,10 +1,49 @@
 @startuml "AARBSeq"
-RR -> RiverSubscriber: RC/Adjustment Completion Event
+RapidsRivers -> RiverSubscriber: RC/Adjustment Completion Event
 box "Associate Account Relationship Service" 
 participant RiverSubscriber
+RiverSubscriber -> AssociateAccountRelationshipClient: Invoke
+AssociateAccountRelationshipClient -> AssociateAccountRelationshipClient: CheckMaxReprocess Count
+AssociateAccountRelationshipClient -> RapidsRivers : Publish Max Retry Error Event
+AssociateAccountRelationshipClient -> EventRegistry: Check Duplicate and Register Event
+alt
+AssociateAccountRelationshipClient -> RapidPublisher: Duplicate Event Error
+AssociateAccountRelationshipClient -> RapidPublisher: Publish Error Event
+end
+AssociateAccountRelationshipClient -> ODMRquest: Create Request XML
+ODMRquest -> NGDB: Retrieve Account List for the Customer
+loop
+ODMRquest -> NGDB: Check Add and Account Version for Each Account
+end
+ODMRquest -> ODMRquest : Create ODM Event Header
+ODMRquest -> NGDB: Get All CustomerToAccount Info
+ODMRquest -> NGDB: Get All Customers for Each Account
+ODMRquest -> NGDB: Get Existing Rep Account Relationships
+loop for each
+ODMRquest -> RC_DataClient: Get Cust Rep Ralationship
+end
+ODMRquest -> ODMRquest: Extract Cust-Rep for Delete Adj from Event itself
+ODMRquest -> ODMRquest: Create Final ODM Request XML
+ODMRquest -> ODMDataClient: Request XML
+ODMDataClient -> ODMRquest: Rep-Acct Relationship with ACTIVE/INACTIVE/DO_NOTHING
+ODMRquest -> RepAccountSync
+loop for each Rep-Acct
+RepAccountSync -> NGDB : Update Effective Date as Cycle Date for INACTIVE
+RepAccountSync -> NGDB : ADD ACTIVE Rep-Account
+RepAccountSync -> ODMDataClient : Ignore DO_NOTHING Rep-Account
+end
+alt Retry Processing
+RepAccountSync -> AssociateAccountRelationshipClient: AccountVersion Mismatch
+AssociateAccountRelationshipClient -> RapidPublisher: RetryProcessing with ODM Event
+AssociateAccountRelationshipClient -> EventRegistry: Failed
+RapidPublisher -> RapidsRivers: Publish RC/Adj Retry Event 
+end
+RepAccountSync -> AssociateAccountRelationshipClient: Success
+AssociateAccountRelationshipClient -> RapidPublisher: Rep-Account RelationShips
+RapidPublisher -> RapidsRivers: Publish Completion Event 
+RapidsRivers <-- RapidPublisher: Publish AARB Completion Event
 
+AssociateAccountRelationshipClient -> EventRegistry: Success
 
-
-RR <-- RapidPublisher: Publish AARB Completion Event
 end box
 @enduml
