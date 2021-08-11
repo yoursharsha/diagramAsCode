@@ -1,0 +1,203 @@
+
+DigIO
+Home
+About
+Solutions
+Case Studies
+Training
+Flutter Workshop
+GraphQL Workshop
+Golang Workshop
+Istio Workshop
+Kubernetes Workshop
+Careers
+How we hire
+Current Opportunities
+Community
+Latest Thinking
+Contact
+DigioTesting
+Microservice Performance Testing
+By Arvind MathiazhaganAugust 29, 2018No Comments
+Introduction
+Microservices that have been developed go through different phases of testing before it hits production. Once a service has passed unit and integration tests, its time for the performance test. Performance tests will validate how a microservice will handle the expected load. Ideally, all the testing phases are carried out during a continuous integration workflow.
+
+In this article we will demonstrate how to perform microservice performance testing using k6 and Mountebank. To start with, let us consider an example where a microservice provides HTTP GET endpoint. A HTTP GET request to this endpoint will provide a response based on secondary downstream service, lets call it service B, as show in the below diagram.
+
+To perform the load test, k6 is used for executing the test scripts and Mountebank for mocking the service B. The microservice has to be load tested by mocking all the dependent interfaces. This can be done using Mountebank which is powerful to provide dynamic and delayed responses.
+
+
+
+Why k6?
+
+The tools that are used for load testing are created for QA professionals and they are not developer friendly tool. This tools are complex GUI driven based testing, hence load testing has largely been reserved for a small minority of enterprises to afford a specialized workforce.
+
+k6 is an open source load testing tool, provides the ability to test the performance of backend services
+It is written in Go and scriptable in Javascript
+It is simple, developer centric, easily configurable and suitable for automation
+Ability to export data to InfluxDB to be visualized by Grafana
+Why Mountebank?
+
+Mountebank is an open source service virtualisation tool that can handle multiple protocols
+It is simple, configurable and suitable for automation
+Ability to provide static, dynamic and delayed responses
+Implementation
+Step 1: Prerequisites Install
+For installing and running this example, the system needs the following tools installed.
+
+NodeJS
+Brew
+Docker ( It is optional unless you need to view the metrics in Grafana )
+Step 2: K6 Install
+K6 can be installed using brew or docker. For this example we are using brew
+
+brew tap loadimpact/k6
+brew install k6
+
+Step 3: Grafana Install (Optional)
+This install is required if the test results need to be viewed in Grafana. For Grafana dashboard setup follow this Link
+
+docker-compose up -d influxdb grafana
+
+Step 4: Project Structure
+Get the source code for this application from GitHub
+
+
+performance_test/
+├── mountebank/
+│   ├── imposter.ejs
+│   ├── serviceBImposters.ejs
+│   ├── serviceBRespone.json
+├── config.json
+├── scripts.js
+└── package.json
+
+imposter.ejs
+This contains a list of imposter files based on the number of services to be mocked. As per the example, Service B is used by the Microservice and this service will be mocked by Mountebank.
+
+{
+  "imposters": [ <% include serviceBImposter.ejs %> ]
+}
+
+serviceBImposters.ejs
+This contains a stub which defines how to respond to incoming requests. This imposter makes mountebank to respond to http requests on port 4545. A stub uses predicates to define the rules where the requests are mapped in providing corresponding responses. In this stub, it will look for a GET request on a specified path “/api”. It will then return a 200 response after 500ms. The “wait” attribute is used to delay the response.
+
+
+{
+  "port": 4545,
+  "protocol": "http",
+  "name": "Service B Stub",
+  "recordRequests": true,
+  "stubs": [{
+    "predicates": [{
+      "equals": {
+        "method": "GET",
+        "path": "/api"
+      }
+     }],
+     "responses": [{
+       "is": {
+         "statusCode": 200,
+         "body": "<%- stringify(filename, 'serviceBResponse.json') %>"
+        },
+       "_behaviors": {
+         "wait": 500
+       }
+     }]
+  }]
+}
+
+config.json
+It represents the k6 configuration to provide options to configure how k6 will behave during test execution. Here “vus” specifies the number of virtual user to run concurrently and “iterations” specifies the fixed number of iterations to execute of the script.
+
+{
+  "vus": 100,
+  "iterations": 195
+}
+
+scripts.js
+This is the load test code which defines the HTTP requests that will be used to test the micorservice. Here the request is a simple GET request and checking for 200 in the response status.
+
+import {check} from 'k6'
+import http from 'k6/http'
+export default function () {
+const response = http.get('http://localhost:9003/api')
+check(response, {
+  'Status is 200': (r) => r.status === 200
+})}
+
+Testing in Action
+Step 5: From the performance_test folder, on a new terminal session run the below command to install all the node dependencies specified in package.json
+
+npm install
+
+Step 6: On a terminal session run the below command to start the Microservice to be tested
+
+npm run start_micro
+
+Step 7: On another terminal session run the below command to start up mountebank which is mocking the Service B
+
+npm run mock
+
+Step 8: All set and now its time to run the performance test. Lets trigger the test by running the below command on another terminal session. It will start hitting Microservice with number of users configured in config.json. The results will be displayed on the console.
+
+npm test
+
+The below screenshot provides the kind of metrics k6 collects automatically. It consists of http and data metrics collected on running the test. The metrics to be noticed are
+
+checks : Number of failed checks.
+http_req : No. of HTTP requests has k6 generated in total.
+http_req_duration : Total time for the request. ( http_req_sending + http_req_waiting + http_req_receiving )
+iterations : No. of times the VUs have requested the URL.
+
+
+Step 9: Run this below command if Grafana has been installed and configured as per the above instructions. The metrics can be accessed by http://localhost:3000/
+
+npm run test_report
+
+This graph uses InfluxDB for data storage and Grafana for visualization.
+
+
+
+Summary
+In this article, we have seen how K6 and Mountebank can be used for performance testing a microservice. This is designed to make load testing as simple as possible. It is aimed for both testers and developers and allows testing of micorservices during the early stages of the development cycle. When load tests of components are defined, it can be part of Continuous Integration and Delivery.
+
+References
+K6
+Mountebank
+Mock it with mountebank
+Happy Performance Testing …
+
+Next Post
+Mock it with mountebank!
+Mock it with mountebank!
+A Human Approach To Technology And Leadership
+We make it our business to build knowledge
+and capability in others by sharing skills, information
+and experiences that encourage learning and progress.
+
+DigIO
+Home
+About
+Solutions
+Training
+Careers
+Community
+Latest Thinking
+Contact
+
+Get In Touch
+1300 505 240
+info@digio.com.au
+
+Melbourne
+Level 2, 452 Flinders St.
+Melbourne VIC 3000
+
+Sydney
+Level 7, 309 George St.
+Sydney NSW 2000
+
+
+© 2021 DigIO.
+
