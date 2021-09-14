@@ -1,0 +1,84 @@
+----------------
+Hi Everyone,
+PI tech Future Forward.... we were exploring multiple industry trends.. namely open banking, RPA, Reg Tech and CNCF is one of them
+one of the streams is analysing CNCF
+
+
+CNCF is is part of the non-profit  Linux Foundation and includes big names such as Google, IBM, Intel, Box, Cisco, and VMware, along with a variety of smaller companies like Docker, Cycle Computing, Mesosphere, and Weaveworks.
+
+--------------
+
+For that for that first we shhould understand .... What is cloud native
+Cloud-Native is a term which frequently comes in while discussing on Digital Transformation and modern application development. But what does it actually mean
+
+Cloud native technologies empower organizations to build and run scalable applications in modern, dynamic environments such as public, private, and hybrid clouds. Containers, service meshes, microservices, immutable infrastructure, and declarative APIs exemplify this approach.
+
+In other words, Building Cloud Native Applications would enable enterprises to run the applications without worrying about underlying infrastructure.
+
+------------
+CNCF?
+Containers have been adopted widely across the globe, but as people have started to use containers they are realizing shortfalls in the technology. The CNCF is trying to fix that. 
+
+CNCF defines cloud-native as “scalable applications” running in “modern dynamic environments” that use technologies such as containers, microservices, and declarative APIs. Kubernetes is the world’s most popular container-orchestration platform and the first CNCF project.
+
+Lets have a quick look at CNCF landscape
+There are 3 stages -  
+
+
+---------------------------
+GitOps:
+
+In easy words, GitOps is a smart and intelligent way for Continuous Deployment of Cloudnative application.
+How its smart?
+As it continuously monitor and matches the production environment with the development code repository in an automated manner and any anomaly is reported if desired state as per defined code is disrupted any time in production i.e. a Control Loop.
+That also means, GitOps empowered developers to a great extent with Automated Ops to reduce any manual intervention in production.
+
+Declarative
+The entire system is described declaratively, you simply say what you want to do instead of defining it how it has to be done
+
+Git as Single Source of Truth
+Declarative changes let you think of changes as transactions
+
+Kubernetes Operator
+Operators are software extensions to Kubernetes that make use of custom resources to manage applications and their components. Approved changes to the desired state are automatically applied to the system
+
+Continuous Observability
+Software agents ensure correctness and alert on divergence
+
+---------------------------
+
+Argo has 3 projects under its umbrella.....  ArgoCD, ArgoRollOuts and Argo Workflows
+
+
+Argo CD follows the GitOps pattern of using Git repositories as the source of truth for defining the desired application state. 
+Kubernetes manifests can be specified in several ways like helm, yamls, kustomize etc
+
+Argo CD is implemented as a kubernetes controller which continuously monitors running applications and compares the current, live state against the desired target state (as specified in the Git repo). A deployed application whose live state deviates from the target state is considered OutOfSync. Argo CD reports & visualizes the differences, while providing facilities to automatically or manually sync the live state back to the desired target state. Any modifications made to the desired target state in the Git repo can be automatically applied and reflected in the specified target environments.
+
+
+Application deployments can track updates to branches, tags, or pinned to a specific version of manifests at a Git commit. 
+
+
+Lot of companies have adopted ArgoCD few of them are Alibaba, BMW, Capital, Gartner ...etc
+
+
+Features
+senthil to share
+---------------------------------
+
+Argo Rollouts is a Kubernetes controller and set of CRDs which provide advanced deployment capabilities such as blue-green, canary, canary analysis, experimentation, and progressive delivery features to Kubernetes.
+
+Argo Rollouts can also be integrated with ingress controllers and service meshes, leveraging their traffic shaping abilities to gradually shift traffic to the new version during an update. Additionally, Rollouts can query and interpret metrics from various providers to verify key KPIs and drive automated promotion or rollback during an update.
+
+Why Argo Rollouts?¶
+The native Kubernetes Deployment Object supports the RollingUpdate strategy which provides a basic set of safety guarantees (readiness probes) during an update. However the rolling update strategy faces many limitations:
+
+Few controls over the speed of the rollout
+Inability to control traffic flow to the new version
+Readiness probes are unsuitable for deeper, stress, or one-time checks
+No ability to query external metrics to verify an update
+Can halt the progression, but unable to automatically abort and rollback the update
+For these reasons, in large scale high-volume production environments, a rolling update is often considered too risky of an update procedure since it provides no control over the blast radius, may rollout too aggressively, and provides no automated rollback upon failures.
+
+
+
