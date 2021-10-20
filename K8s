@@ -1,0 +1,115 @@
+Docker makes it easier for developers to package their applications to “build once and run anywhere.” All the docker containers run on a shared kernel.
+
+Advantages of using docker:
+Lighter weight: Unlike VMs, containers don’t carry the payload of an entire OS instance and hypervisor; they include only the OS processes and dependencies necessary to execute the code
+Greater resource efficiency
+Compared to VMs, containers are faster and easier to deploy, provision and restart. 
+Also makes it easier for CI/CD
+
+--------------------------------
+
+Why you need Kubernetes and what it can do
+Containers are a good way to bundle and run your applications. In a production environment, you need to manage the containers that run the applications and ensure that there is no downtime. For example, if a container goes down, another container needs to start. Wouldn't it be easier if this behavior was handled by a system?
+
+Kubernetes provides you with a framework to run distributed systems resiliently. It takes care of scaling and failover for your application, provides deployment patterns, and more. For example, Kubernetes can easily manage a canary deployment for your system.
+
+
+Self-healing:  Kubernetes restarts containers that fail, replaces containers, kills containers that don't respond to your user-defined health check, and doesn't advertise them to clients until they are ready to serve.
+
+Automated rollouts and rollbacks: You can describe the desired state for your deployed containers using Kubernetes, and it can change the actual state to the desired state at a controlled rate. For example, you can automate Kubernetes to create new containers for your deployment, remove existing containers and adopt all their resources to the new container.
+
+Automatic bin packing: You provide Kubernetes with a cluster of nodes that it can use to run containerized tasks. You tell Kubernetes how much CPU and memory (RAM) each container needs. Kubernetes can fit containers onto your nodes to make the best use of your resources.
+
+Service discovery and load balancing: Kubernetes can expose a container using the DNS name or using their own IP address. If traffic to a container is high, Kubernetes is able to load balance and distribute the network traffic so that the deployment is stable.
+
+
+Secret and configuration management: Kubernetes lets you store and manage sensitive information, such as passwords, OAuth tokens, and SSH keys. You can deploy and update secrets and application configuration without rebuilding your container images, and without exposing secrets in your stack configuration.
+
+Storage orchestration: Kubernetes allows you to automatically mount a storage system of your choice, such as local storages, public cloud providers, and more.
+
+
+-------------
+
+
+-------------
+https://searchitoperations.techtarget.com/tutorial/A-step-by-step-tutorial-for-Kubernetes-implementation
+
+https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster
+
+kubectl create deployment my-nginx --image nginx
+kubectl get pods
+kubectl get deployment
+kubectl describe deployment my-nginx
+kubectl scale deployment my-nginx --replicas 4
+
+kubectl expose deployment my-nginx --port=80 --type=NodePort
+
+kubectl get services
+
+kubectl port-forward svc/my-nginx 80:80
+
+kubectl describe deployments nodeapi
+
+kubectl scale deployment.v1.apps/nodeapi --replicas=10
+
+https://medium.com/bb-tutorials-and-thoughts/how-to-run-nodejs-api-on-local-kubernetes-a9e61274be22
+
+----------
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+https://kubernetes.io/docs/concepts/workloads/pods/
+https://platform9.com/blog/kubernetes-enterprise-chapter-2-kubernetes-architecture-concepts/
+	
+---------
+Scaling a Deployment
+You can scale a Deployment by using the following command:
+
+kubectl scale deployment.v1.apps/nginx-deployment --replicas=10
+
+kubectl scale deployment.v1.apps/nodeapi --replicas=10
+
+----------------
+
+
+
+
+
+https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster
+
+
+Demo Steps:
+
+kubectl cluster-info
+
+
+git clone https://github.com/bbachi/nodejs-restapi-minikube.git
+
+cd nodejs-restapi-minikube
+
+docker build -t node-api .
+
+docker images
+
+kubectl apply -f pod.yml
+
+kubectl describe pod node-api-pod
+
+kubectl get pods
+
+kubectl delete pod node-api-pod
+
+
+kubectl apply -f deployment.yml
+
+kubectl get pods
+
+kubectl describe deployments nodeapi
+
+kubectl scale deployment.v1.apps/nodeapi --replicas=10
+
+kubectl apply -f service.yml
+
+kubectl get svc
+
+http://192.168.64.2:32329/name?name=myname
+
+
